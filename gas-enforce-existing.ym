@@ -1,0 +1,280 @@
+name: Github Advanced Security - Check Open Vulnerabilities
+
+on:
+  workflow_call:
+    secrets:
+      GITHUB_TOKEN:
+        description: Service-account user token
+        required: true     
+        
+permissions:
+  checks: write
+  contents: read
+  actions: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  aging_critical_vulnerabilities:
+    runs-on: ubuntu-latest         
+    steps:      
+      - name: Critical - Check Aging Vulnerabilities
+        id: vulnerability
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            let status = "success"
+            let response
+            let aging_vulns = []
+            const today = new Date()
+            const fix_by = new Date(new Date().setDate(today.getDate() - 10));
+            const vulns = github.rest.dependabot.listAlertsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                severity: "critical",
+                state: "open"
+            })
+            result = await vulns
+            if (result.data.length <= 0) {
+                response = "No critical vulnerabilties found"
+                console.log(response)
+            }
+            else {
+                for (key in result.data) {
+                    let created_at = new Date(result.data[key].created_at);
+                    if (created_at < fix_by) {
+                        aging_vulns.push(result.data[key].html_url)
+                        status = "failure"
+                    }
+                    else {
+                        response = "This vulnerability is below aging threshold"
+                        console.log(response, result.data[key].html_url)
+                    }
+                }
+            }
+            console.log("here are aging vulns", aging_vulns)                
+            if(status =="failure"){
+              return  aging_vulns.toString().replace(/,/g, "").replace(/https/g, "<br/><br/>- https");
+            }
+            else{
+              return status
+            }
+      - name: Critical Vulnerabilities - status check
+        uses: LouisBrunner/checks-action@v2.0.0
+        if: always()
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Critical Vulnerabilities - Aging
+          conclusion: ${{steps.vulnerability.outputs.result != 'success' && 'failure' || 'success' }}
+
+      - name: Comment Deployment to PR
+        uses: actions/github-script@v7
+        if: ${{steps.vulnerability.outputs.result != 'success' }}
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 There are Critical vulnerabilities found that are older than 10 days, these must be resolved before proceeding 🚨 ${{steps.vulnerability.outputs.result}} '
+            })   
+  aging_high_vulnerabilities:
+    runs-on: ubuntu-latest         
+    steps:      
+      - name: high - Check Aging Vulnerabilities
+        id: vulnerability
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            let status = "success"
+            let response
+            let aging_vulns = []
+            const today = new Date()
+            const fix_by = new Date(new Date().setDate(today.getDate() - 10));
+            const vulns = github.rest.dependabot.listAlertsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                severity: "high",
+                state: "open"
+            })
+            result = await vulns
+            if (result.data.length <= 0) {
+                response = "No high vulnerabilties found"
+                console.log(response)
+            }
+            else {
+                for (key in result.data) {
+                    let created_at = new Date(result.data[key].created_at);
+                    if (created_at < fix_by) {
+                        aging_vulns.push(result.data[key].html_url)
+                        status = "failure"
+                    }
+                    else {
+                        response = "This vulnerability is below aging threshold"
+                        console.log(response, result.data[key].html_url)
+                    }
+                }
+            }
+            console.log("here are aging vulns", aging_vulns)                
+            if(status =="failure"){
+              return  aging_vulns.toString().replace(/,/g, "").replace(/https/g, "<br/><br/>- https");
+            }
+            else{
+              return status
+            }
+            
+      - name: High Vulnerabilities - status check
+        uses: LouisBrunner/checks-action@v2.0.0
+        if: always()
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: High Vulnerabilities - Aging
+          conclusion: ${{steps.vulnerability.outputs.result != 'success' && 'failure' || 'success' }}
+
+      - name: Comment Deployment to PR
+        uses: actions/github-script@v7
+        if: ${{steps.vulnerability.outputs.result != 'success' }}
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 There are High vulnerabilities found that are older than 10 days, these must be resolved before proceeding 🚨 ${{steps.vulnerability.outputs.result}} '
+            })   
+  aging_moderate_vulnerabilities:
+    runs-on: ubuntu-latest         
+    steps:      
+      - name: Moderate - Check Aging Vulnerabilities
+        id: vulnerability
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            let status = "success"
+            let response
+            let aging_vulns = []
+            const today = new Date()
+            const fix_by = new Date(new Date().setDate(today.getDate() - 60));
+            const vulns = github.rest.dependabot.listAlertsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                severity: "moderate",
+                state: "open"
+            })
+            result = await vulns
+            if (result.data.length <= 0) {
+                response = "No moderate vulnerabilties found"
+                console.log(response)
+            }
+            else {
+                for (key in result.data) {
+                    let created_at = new Date(result.data[key].created_at);
+                    if (created_at < fix_by) {
+                        aging_vulns.push(result.data[key].html_url)
+                        status = "failure"
+                    }
+                    else {
+                        response = "This vulnerability is below aging threshold"
+                        console.log(response, result.data[key].html_url)
+                    }
+                }
+            }
+            console.log("here are aging vulns", aging_vulns)                
+            if(status =="failure"){
+              return  aging_vulns.toString().replace(/,/g, "").replace(/https/g, "<br/><br/>- https");
+            }
+            else{
+              return status
+            }
+            
+      - name: Moderate Vulnerabilities - status check
+        uses: LouisBrunner/checks-action@v2.0.0
+        if: always()
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Moderate Vulnerabilities - Aging
+          conclusion: ${{steps.vulnerability.outputs.result != 'success' && 'failure' || 'success' }}
+
+      - name: Comment Deployment to PR
+        uses: actions/github-script@v7
+        if: ${{steps.vulnerability.outputs.result != 'success' }}
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 There are Moderate vulnerabilities found that are older than 60 days, these must be resolved before proceeding 🚨 ${{steps.vulnerability.outputs.result}} '
+            })                                              
+  aging_low_vulnerabilities:
+    runs-on: ubuntu-latest         
+    steps:      
+      - name: Low - Check Aging Vulnerabilities
+        id: vulnerability
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            let status = "success"
+            let response
+            let aging_vulns = []
+            const today = new Date()
+            const fix_by = new Date(new Date().setDate(today.getDate() - 90));
+            const vulns = github.rest.dependabot.listAlertsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                severity: "low",
+                state: "open"
+            })
+            result = await vulns
+            if (result.data.length <= 0) {
+                response = "No low vulnerabilties found"
+                console.log(response)
+            }
+            else {
+                for (key in result.data) {
+                    let created_at = new Date(result.data[key].created_at);
+                    if (created_at < fix_by) {
+                        aging_vulns.push(result.data[key].html_url)
+                        status = "failure"
+                    }
+                    else {
+                        response = "This vulnerability is below aging threshold"
+                        console.log(response, result.data[key].html_url)
+                    }
+                }
+            }
+            console.log("here are aging vulns", aging_vulns)                
+            if(status =="failure"){
+              return  aging_vulns.toString().replace(/,/g, "").replace(/https/g, "<br/><br/>- https");
+            }
+            else{
+              return status
+            }
+            
+      - name: Low Vulernabilities - status check
+        uses: LouisBrunner/checks-action@v2.0.0
+        if: always()
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Low Vulnerabilities - Aging
+          conclusion: ${{steps.vulnerability.outputs.result != 'success' && 'failure' || 'success' }}
+
+      - name: Comment Deployment to PR
+        uses: actions/github-script@v7
+        if: ${{steps.vulnerability.outputs.result != 'success' }}
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 There are Low vulnerabilities found that are older than 90 days, these must be resolved before proceeding 🚨 ${{steps.vulnerability.outputs.result}} '
+            })   
