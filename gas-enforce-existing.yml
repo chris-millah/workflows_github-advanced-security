@@ -29,7 +29,7 @@ jobs:
             let response
             let aging_vulns = []
             const today = new Date()
-            const fix_by = new Date(new Date().setDate(today.getDate() - 10));
+            const fix_by = new Date(new Date().setDate(today.getDate() - 2));
             const vulns = github.rest.dependabot.listAlertsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -78,7 +78,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚨 There are Critical vulnerabilities found that are older than 10 days, these must be resolved before proceeding 🚨 ${{steps.vulnerability.outputs.result}} '
+              body: '🚨 There are Critical vulnerabilities found that are older than 2 days, these must be resolved before proceeding 🚨 ${{steps.vulnerability.outputs.result}} '
             })   
   aging_high_vulnerabilities:
     runs-on: ubuntu-latest         
