@@ -1,6 +1,7 @@
 These reusable workflows can be used across organization's repos to extend the Github Advanced Security Features.
 
-
+- *recommended* that branch-rules are implemented to enforce these checks resulting in more secure source code.
+  -  e.g. `if aging-dependency-review == failure ` do not allow merge to `main`
 
 Example usage ( caller workflow ) 
 
