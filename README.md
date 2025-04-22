@@ -26,6 +26,12 @@ permissions:
   checks: write
 
 jobs:
+  static-code-analysis:
+    name: CodeQL - Static Code Analysis
+    uses: <YOUR_ORG>/workflows/.github/workflows/gas-codeql.yml@main
+    with:
+      language: 'python'
+
   aging-dependency-review:
     name: Aging Dependency Review
     if: github.event_name == 'pull_request'
